@@ -84,7 +84,7 @@ if(!class_exists('BC_CF7_Vault')){
 
         public function init(){
             register_post_type('bc_cf7_submission', [
-                'labels' => bc_post_type_labels('CF7 Submission', 'CF7 Submissions', false),
+                'labels' => bc_post_type_labels('Submission', 'Submissions', false),
                 'menu_icon' => 'dashicons-vault',
                 'show_in_admin_bar' => false,
                 'show_ui' => true,
