@@ -52,45 +52,6 @@ if(!class_exists('BC_CF7_Vault')){
 
     	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    	private function copy($source = '', $destination = '', $overwrite = false, $mode = false){
-            global $wp_filesystem;
-            $fs = $this->filesystem();
-            if(is_wp_error($fs)){
-                return $fs;
-            }
-            if(!$wp_filesystem->copy($source, $destination, $overwrite)){
-                return new WP_Error('files_not_writable', sprintf(__('The uploaded file could not be moved to %s.'), $destination));
-            }
-            return $destination;
-        }
-
-    	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    	private function filesystem(){
-            global $wp_filesystem;
-            if($wp_filesystem instanceof WP_Filesystem_Direct){
-                return true;
-            }
-            if(!function_exists('get_filesystem_method')){
-                require_once(ABSPATH . 'wp-admin/includes/file.php');
-            }
-            if('direct' !== get_filesystem_method()){
-                return new WP_Error('fs_unavailable', __('Could not access filesystem.'));
-            }
-            if(!WP_Filesystem()){
-                return new WP_Error('fs_error', __('Filesystem error.'));
-            }
-            return true;
-        }
-
-    	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    	private function first_p($text = '', $dot = true){
-            return $this->one_p($text, $dot, 'first');
-        }
-
-    	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     	private function get_type($contact_form = null){
             if(null === $contact_form){
                 $contact_form = wpcf7_get_current_contact_form();
@@ -107,67 +68,12 @@ if(!class_exists('BC_CF7_Vault')){
 
     	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    	private function last_p($text = '', $dot = true){
-            return $this->one_p($text, $dot, 'last');
-        }
-
-    	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    	private function one_p($text = '', $dot = true, $p = 'first'){
-            if(false === strpos($text, '.')){
-                if($dot){
-                    $text .= '.';
-                }
-                return $text;
-            } else {
-                $text = explode('.', $text);
-				$text = array_filter($text);
-                switch($p){
-                    case 'first':
-                        $text = array_shift($text);
-                        break;
-                    case 'last':
-                        $text = array_pop($text);
-                        break;
-                    default:
-                        $text = __('Error');
-                }
-                if($dot){
-                    $text .= '.';
-                }
-                return $text;
-            }
-        }
-
-    	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     	private function upload_file($tmp_name = '', $post_id = 0){
-            global $wp_filesystem;
-            $upload_dir = wp_upload_dir();
-            $original_filename = wp_basename($tmp_name);
-            $filename = wp_unique_filename($upload_dir['path'], $original_filename);
-            $file = trailingslashit($upload_dir['path']) . $filename;
-            $result = $this->copy($tmp_name, $file);
-            if(is_wp_error($result)){
-                return $result;
+            $file = bc_move_uploaded_file($tmp_name);
+            if(is_wp_error($file)){
+                return $file;
             }
-            $filetype_and_ext = wp_check_filetype_and_ext($file, $filename);
-            if(!$filetype_and_ext['type']){
-                return new WP_Error('invalid_filetype', __('Sorry, this file type is not permitted for security reasons.'));
-            }
-            $attachment_id = wp_insert_attachment([
-                'guid' => str_replace($upload_dir['basedir'], $upload_dir['baseurl'], $file),
-                'post_mime_type' => $filetype_and_ext['type'],
-                'post_status' => 'inherit',
-                'post_title' => preg_replace('/\.[^.]+$/', '', $original_filename),
-            ], $file, $post_id, true);
-            if(is_wp_error($attachment_id)){
-                return $attachment_id;
-            }
-            $attachment = get_post($attachment_id);
-            wp_raise_memory_limit('image');
-            wp_maybe_generate_attachment_metadata($attachment);
-            return $attachment_id;
+            return bc_upload($file, $post_id);
         }
 
     	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -189,6 +95,9 @@ if(!class_exists('BC_CF7_Vault')){
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         public function plugins_loaded(){
+            if(!defined('BC_FUNCTIONS')){
+        		return;
+        	}
             if(!defined('WPCF7_VERSION')){
         		return;
         	}
@@ -197,6 +106,7 @@ if(!class_exists('BC_CF7_Vault')){
             if(!has_filter('wpcf7_verify_nonce', 'is_user_logged_in')){
                 add_filter('wpcf7_verify_nonce', 'is_user_logged_in');
             }
+            bc_build_update_checker('https://github.com/beavercoffee/bc-cf7-vault', $this->file, 'bc-cf7-vault');
         }
 
     	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,7 +132,7 @@ if(!class_exists('BC_CF7_Vault')){
 			], true);
             if(is_wp_error($post_id)){
                 $message = $post_id->get_error_message();
-                $message .=  ' ' . $this->last_p(__('Application passwords are not available for your account. Please contact the site administrator for assistance.'));
+                $message .=  ' ' . bc_last_p(__('Application passwords are not available for your account. Please contact the site administrator for assistance.'));
                 $submission->set_response($message);
                 $submission->set_status('aborted');
                 return;
@@ -260,7 +170,7 @@ if(!class_exists('BC_CF7_Vault')){
             do_action('bc_cf7_vault', $post_id, $contact_form, $error);
             if($error->has_errors()){
                 $message = $error->get_error_message();
-                $message .=  ' ' . $this->last_p(__('Application passwords are not available for your account. Please contact the site administrator for assistance.'));
+                $message .=  ' ' . bc_last_p(__('Application passwords are not available for your account. Please contact the site administrator for assistance.'));
                 $submission->set_response($message);
                 $submission->set_status('aborted');
                 return;
