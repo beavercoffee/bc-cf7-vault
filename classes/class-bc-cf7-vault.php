@@ -167,7 +167,7 @@ if(!class_exists('BC_CF7_Vault')){
                     }
                 }
             }
-            do_action('bc_cf7_vault', $post_id, $contact_form, $error);
+            do_action('bc_cf7_vault', $post_id, $contact_form, $submission, $error);
             if($error->has_errors()){
                 $message = $error->get_error_message();
                 $message .=  ' ' . bc_last_p(__('Application passwords are not available for your account. Please contact the site administrator for assistance.'));
