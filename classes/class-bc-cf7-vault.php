@@ -130,12 +130,8 @@ if(!class_exists('BC_CF7_Vault')){
 				'post_title' => sprintf('[contact-form-7 id="%1$d" title="%2$s"]', $contact_form->id(), $contact_form->title()),
 				'post_type' => 'bc_cf7_submission',
 			], true);
-            if(is_wp_error($post_id)){
-                $message = $post_id->get_error_message();
-                $message .=  ' ' . bc_last_p(__('Application passwords are not available for your account. Please contact the site administrator for assistance.'));
-                $submission->set_response($message);
-                $submission->set_status('aborted');
-                return;
+            if(!is_wp_error($post_id)){
+                return; // Silence is golden.
             }
             $posted_data = $submission->get_posted_data();
             if($posted_data){
@@ -159,6 +155,8 @@ if(!class_exists('BC_CF7_Vault')){
                     foreach((array) $value as $single){
                         $attachment_id = $this->upload_file($single, $post_id);
                         if(is_wp_error($attachment_id)){
+                            add_post_meta($post_id, $key . '_id', 0);
+                            add_post_meta($post_id, $key . '_filename', $attachment_id->get_error_message());
                             $error->merge_from($attachment_id);
                         } else {
                             add_post_meta($post_id, $key . '_id', $attachment_id);
@@ -168,13 +166,6 @@ if(!class_exists('BC_CF7_Vault')){
                 }
             }
             do_action('bc_cf7_vault', $post_id, $contact_form, $submission, $error);
-            if($error->has_errors()){
-                $message = $error->get_error_message();
-                $message .=  ' ' . bc_last_p(__('Application passwords are not available for your account. Please contact the site administrator for assistance.'));
-                $submission->set_response($message);
-                $submission->set_status('aborted');
-                return;
-            }
         }
 
     	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
