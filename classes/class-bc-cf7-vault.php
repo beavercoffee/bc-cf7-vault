@@ -71,6 +71,7 @@ if(!class_exists('BC_CF7_Vault')){
                 add_filter('wpcf7_verify_nonce', 'is_user_logged_in');
             }
             bc_build_update_checker('https://github.com/beavercoffee/bc-cf7-vault', $this->file, 'bc-cf7-vault');
+            do_action('bc_cf7_valut_loaded');
         }
 
     	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
