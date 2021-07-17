@@ -12,7 +12,7 @@ Plugin URI: https://github.com/beavercoffee/bc-cf7-vault
 Requires at least: 5.7
 Requires PHP: 5.6
 Text Domain: bc-cf7-vault
-Version: 1.7.17
+Version: 1.7.17.1
 */
 
 if(defined('ABSPATH')){
