@@ -52,6 +52,33 @@ if(!class_exists('BC_CF7_Vault')){
 
     	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    	private function get_post_status($contact_form = null){
+            $post_status = bc_cf7()->pref('bc_post_status', $contact_form);
+            if('' === $post_status){
+                return 'private';
+            }
+            $statuses = get_post_statuses();
+            if(!array_key_exists($post_status, $statuses)){
+                return 'private';
+            }
+            return $post_status;
+        }
+
+    	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    	private function get_post_type($contact_form = null){
+            $post_type = bc_cf7()->pref('bc_post_type', $contact_form);
+            if('' === $post_type){
+                return 'bc_cf7_submission';
+            }
+            if(!post_type_exists($post_type)){
+                return 'bc_cf7_submission';
+            }
+            return $post_type;
+        }
+
+    	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     	private function is_type($contact_form = null){
             return bc_cf7()->is_type('', $contact_form);
         }
@@ -99,9 +126,9 @@ if(!class_exists('BC_CF7_Vault')){
                 return; // prevent conflicts with other plugins
             }
             $post_id = wp_insert_post([
-				'post_status' => 'private',
+				'post_status' => $this->get_post_status($contact_form),
 				'post_title' => '[bc-cf7-submission]',
-				'post_type' => 'bc_cf7_submission',
+				'post_type' => $this->get_post_type($contact_form),
 			], true);
             if(is_wp_error($post_id)){
                 $abort = true; // prevent mail_sent and mail_failed actions
