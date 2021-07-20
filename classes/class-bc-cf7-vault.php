@@ -94,9 +94,6 @@ if(!class_exists('BC_CF7_Vault')){
             add_action('wpcf7_before_send_mail', [$this, 'wpcf7_before_send_mail'], 10, 3);
             add_action('wpcf7_mail_failed', [$this, 'wpcf7_mail_failed']);
             add_action('wpcf7_mail_sent', [$this, 'wpcf7_mail_sent']);
-            if(!has_filter('wpcf7_verify_nonce', 'is_user_logged_in')){
-                add_filter('wpcf7_verify_nonce', 'is_user_logged_in');
-            }
             bc_build_update_checker('https://github.com/beavercoffee/bc-cf7-vault', $this->file, 'bc-cf7-vault');
             do_action('bc_cf7_valut_loaded');
         }
